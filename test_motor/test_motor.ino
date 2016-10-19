@@ -17,7 +17,7 @@ const int motorIn2 = 9;
 const int motorIn3 = 10;
 const int motorIn4 = 11;
 
-const int timeInterval = 1000;
+const int timeInterval = 200;
 long timeCount = 1000;
 float durationRight = 0, distanceRight = 0;
 float durationLeft = 0, distanceLeft = 0;
@@ -28,7 +28,7 @@ int checkStock = 0;
 
 //for test
 char cmd;
-boolean run = false;
+boolean run = true;
 
 void setup() {
   // put your setup code here, to run once:
@@ -82,6 +82,7 @@ void loop() {
           break;
         case 'a':
           turnAround();
+          delay(650);
           run = true;  // 停止馬達
           break;
         case 's':
@@ -90,12 +91,30 @@ void loop() {
           break;
       }
     }
-
-    
-    SerialMonitor();
-    timeCount = timeCount + timeInterval;
-    delay(timeInterval);
+    /*
+    if(run == true){
+      for(int i=0;i<5;++i){
+        forward();
+        deadEndCheck();
+        SerialMonitor();
+        timeCount = timeCount + timeInterval;
+        delay(timeInterval);
+      }
+    }
+    */
     motorStop();
+  }
+}
+
+void deadEndCheck(){
+  if(distanceRight < 30.0 &&  distanceLeft < 30.0 && distanceForward < 30.0 ){
+    motorStop();
+    delay(200);
+    turnAround();    
+    delay(650);
+    motorStop();
+    delay(200);
+    forward();
   }
 }
 

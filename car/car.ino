@@ -106,21 +106,16 @@ void trigAndEcho(){
 }
 
 void SerialMonitor(){
-  Serial.print("Data1:");
   Serial.print(timeCount/1000);
-  Serial.print(", distance Right = ");
+  Serial.print(" Right = ");
   Serial.print(distanceRight);
   Serial.print(" cm  ;");
 
-  Serial.print("Data2:");
-  Serial.print(timeCount/1000);
-  Serial.print(", distance Left = ");
+  Serial.print(", Left = ");
   Serial.print(distanceLeft);
-  Serial.println(" cm");
+  Serial.print(" cm");
     
-  Serial.print("Data3:");
-  Serial.print(timeCount/1000);
-  Serial.print(", distance Forward = ");
+  Serial.print(", Forward = ");
   Serial.print(distanceForward);
   Serial.println(" cm");
 }
@@ -133,31 +128,36 @@ void motorStop(){
 }
 
 void forward(){
-  digitalWrite(motorIn1, HIGH);
-  digitalWrite(motorIn2, LOW);
+  digitalWrite(motorIn1, LOW);
+  digitalWrite(motorIn2, HIGH);
   digitalWrite(motorIn3, HIGH);
   digitalWrite(motorIn4, LOW);
 }
 
 void backward(){
-  digitalWrite(motorIn1, LOW);
-  digitalWrite(motorIn2, HIGH);
+  digitalWrite(motorIn1, HIGH);
+  digitalWrite(motorIn2, LOW);
   digitalWrite(motorIn3, LOW);
   digitalWrite(motorIn4, HIGH);
 }
 
-void turnRight(){
-  digitalWrite(motorIn1, HIGH);
-  digitalWrite(motorIn2, LOW);
+void turnLeft(){
+  digitalWrite(motorIn1, LOW);
+  digitalWrite(motorIn2, HIGH);
   digitalWrite(motorIn3, LOW);
   digitalWrite(motorIn4, LOW);
 }
 
-void turnLeft(){
+void turnRight(){
   digitalWrite(motorIn1, LOW);
   digitalWrite(motorIn2, LOW);
   digitalWrite(motorIn3, HIGH);
   digitalWrite(motorIn4, LOW);
 }
 
-
+void turnAround(){
+  digitalWrite(motorIn1, HIGH);
+  digitalWrite(motorIn2, LOW);
+  digitalWrite(motorIn3, HIGH);
+  digitalWrite(motorIn4, LOW);
+}

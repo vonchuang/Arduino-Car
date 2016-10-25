@@ -19,13 +19,11 @@ const int motorIn4 = 11;
 
 const int timeInterval = 200;
 long timeCount = 1000;
-float durationRight = 0, distanceRight = 0;
-float durationLeft = 0, distanceLeft = 0;
-float durationForward = 0, distanceForward = 0;
-float lastDistanceRight = 0, lastDistanceLeft = 0, lastDistanceForward = 0; 
+float durationRight = 0,      durationLeft = 0,     durationForward = 0;
+float distanceRight = 0,      distanceLeft = 0,     distanceForward = 0;
+float lastDistanceRight = 0,  lastDistanceLeft = 0, lastDistanceForward = 0; 
 float x;
 int checkStock = 0;
-
 //for test
 char cmd;
 boolean run = true;
@@ -54,11 +52,10 @@ void loop() {
   lastDistanceForward = distanceForward; 
   
   buttonState = digitalRead(buttonPin);
-  if(buttonState == 0) start=1;
-  if(buttonState == 1) start=0;
-  
+  if(buttonState == 0) start=0;
+  if(buttonState == 1) start=1;
   if(start == 1){  
-    trigAndEcho();
+    getDistance();
 
     if (Serial.available() > 0) {
     cmd = Serial.read();
@@ -82,95 +79,190 @@ void loop() {
           break;
         case 'a':
           turnAround();
-          delay(650);
           run = true;  // 停止馬達
           break;
         case 's':
           motorStop();
           run = false;  // 停止馬達
           break;
+        case 'x':         
+          turnRight();  delay(4.0*timeInterval);
+          motorStop();  delay(50);
+ /*         forward();    delay(timeInterval);
+          motorStop();  delay(50);
+          turnLeft();   delay(timeInterval);
+          forward();    delay(timeInterval);
+          motorStop();  delay(50);
+*/          run = false;  // 停止馬達
+          break;
+        case 'z':         
+          for(int i=0;i<10;++i){
+            getDistance();
+            driveDirectionCheck();
+            forward();           
+//            SerialMonitor();
+            timeCount = timeCount + timeInterval;
+            delay(timeInterval/2);
+          }
+          run = false;  // 停止馬達
+          break;     
       }
     }
     /*
     if(run == true){
       for(int i=0;i<5;++i){
         forward();
-        deadEndCheck();
+        turnCheck();
         SerialMonitor();
         timeCount = timeCount + timeInterval;
         delay(timeInterval);
       }
     }
-    */
+    
+    forward();
+    deadEndCheck();
+    turnCheck();
+    stockCheck();
+ //   driveCenterCheck();
+//    driveDirectionCheck();
+    SerialMonitor();
+*/
+    timeCount = timeCount + timeInterval;
+    delay(timeInterval);    
     motorStop();
   }
+  else motorStop();
 }
+
 
 void deadEndCheck(){
-  if(distanceRight < 30.0 &&  distanceLeft < 30.0 && distanceForward < 30.0 ){
+  if(distanceRight < 15.0 &&  distanceLeft < 15.0 && distanceForward < 22.0 ){
+    Serial.println("dead end");
+    motorStop();         delay(200);
+    turnAround();        delay(625);
+    motorStop();         delay(200);
+    forward();           delay(500);
     motorStop();
-    delay(200);
-    turnAround();    
-    delay(650);
-    motorStop();
-    delay(200);
-    forward();
   }
 }
 
-void driveDirection(){
-  if(distanceRight > distanceLeft) x = distanceRight - distanceLeft;
-    else x = distanceLeft - distanceRight;
-    if(x < 1.0 ) forward();
-    else if( distanceRight > distanceLeft ){
-      turnRight();
-      delay(x*2*timeInterval);
-      forward();
+void turnCheck(){
+  float right = distanceRight - lastDistanceRight;
+  float left = distanceLeft - lastDistanceLeft;
+  float center = distanceForward - lastDistanceForward;
+  
+  if(distanceLeft > 30.0 && distanceRight < 30.0 && distanceForward < 30.0){    //turn left
+    turnLeft();  delay(3.2*timeInterval);
+    motorStop();  delay(50);
+    forward();    delay(2.5*timeInterval);
+    motorStop();  delay(50);        
+    Serial.println("turn left");
+  }
+  if(distanceLeft < 30.0 && distanceRight < 30.0 && distanceForward > 30.0){   //forward
+      
+  }
+  if(distanceLeft < 30.0 && right > 30.0 && distanceForward < 30.0){   //turn right    
+    turnRight();  delay(2.2*timeInterval);
+    motorStop();  delay(50);
+    forward();    delay(2.5*timeInterval);
+    motorStop();  delay(50); 
+    Serial.println("turn right");      
+  }  
+  if(distanceLeft < 30.0 && distanceRight < 30.0 && distanceForward > 30.0){   //left and forward -> turn left
+    turnLeft();  delay(3.2*timeInterval);
+    motorStop();  delay(50);
+    forward();    delay(2.5*timeInterval);
+    motorStop();  delay(50);        
+    Serial.println("turn left");
+  }
+  if(distanceLeft < 30.0 && distanceRight < 30.0 && distanceForward > 30.0){   //forward and right -> forward
+      
+  }
+  if(distanceLeft < 30.0 && distanceRight < 30.0 && distanceForward > 30.0){   //left anf right -> turn left
+    turnLeft();  delay(3.2*timeInterval);
+    motorStop();  delay(50);
+    forward();    delay(2.5*timeInterval);
+    motorStop();  delay(50);        
+    Serial.println("turn left");
+  }
+}
+
+//TODO
+void driveDirectionCheck(){ 
+  float x = distanceRight - distanceLeft;
+  Serial.println(x);
+  if(distanceRight < 30.0 && distanceLeft < 30.0){
+    if(x > 5.0){
+      turnLeft();  delay(timeInterval);
+      motorStop();  delay(50);
+      Serial.println("turn right");
+    }else if(x < -5.0){
+      turnRight();  delay(1.2*timeInterval);
+      motorStop();  delay(50);
+      Serial.println("turn right");
     }
-    else if(distanceRight < distanceLeft ){
-      turnLeft();
-      delay(x*2*timeInterval);
-      forward();
+  }
+}
+
+void driveCenterCheck(){
+    if(distanceRight > distanceLeft && distanceLeft < 4.0 && distanceForward > 30.0){
+        turnRight();  delay(timeInterval);
+        motorStop();  delay(50);
+        forward();    delay(timeInterval);
+        motorStop();  delay(50);
+        turnLeft();   delay(timeInterval);
+        forward();    delay(timeInterval);
+        motorStop();  delay(50);
+    }else if(distanceRight < distanceLeft && distanceRight < 4.0 && distanceForward > 30.0){
+        turnLeft();  delay(1.2*timeInterval);
+        motorStop();  delay(50);
+        forward();    delay(timeInterval);
+        motorStop();  delay(50);
+        turnRight();   delay(0.7*timeInterval);
+        forward();    delay(timeInterval);
+        motorStop();  delay(50);
     }
+  
 }
 
 void stockCheck(){
-  float tmp1 = lastDistanceRight - distanceRight;
-  float tmp2 = lastDistanceLeft - distanceLeft;
-  float tmp3 = lastDistanceForward - distanceForward;
-  if((tmp1 >= -0.01 && tmp1 <= 0.01) && (tmp2 >= -0.01 && tmp2 <= 0.01) && (tmp3 >= -0.01 && tmp3 <= 0.01))
+  float right = lastDistanceRight - distanceRight;
+  float left = lastDistanceLeft - distanceLeft;
+  float forward = lastDistanceForward - distanceForward;
+  if((right >= -2.0 && right <= 2.0) && (left >= -2.0 && left <= 2.0) && (forward >= -2.0 && forward <= 2.0))
     checkStock += timeInterval;
   else checkStock = 0;
   if(checkStock >= 1000){
+    Serial.println("stock");
     backward();
-    delay(1000);
+    delay(400);
   }
 }
 
-void trigAndEcho(){
-  digitalWrite(trigRight, HIGH);
-  delayMicroseconds(1000);
+void getDistance(){ 
+  digitalWrite(trigRight, LOW);  delayMicroseconds(2);
+  digitalWrite(trigRight, HIGH);  delayMicroseconds(10);
   digitalWrite(trigRight, LOW);
   durationRight = pulseIn(echoRight, HIGH);
-  distanceRight = (durationRight/2)/29;
+  distanceRight = durationRight/58.2;
+  if(distanceRight > 3000.0)  distanceRight = lastDistanceRight;
 
-  digitalWrite(trigLeft, HIGH);
-  delayMicroseconds(1000);
+  digitalWrite(trigLeft, LOW); delayMicroseconds(2);
+  digitalWrite(trigLeft, HIGH); delayMicroseconds(10);
   digitalWrite(trigLeft, LOW);
   durationLeft = pulseIn(echoLeft, HIGH);
-  distanceLeft = (durationLeft/2)/29;
-
-  digitalWrite(trigForward, HIGH);
-  delayMicroseconds(1000);
+  distanceLeft = durationLeft/58.2;
+  if(distanceLeft > 3000.0)  distanceLeft = lastDistanceLeft;
+  
+  digitalWrite(trigForward, LOW);  delayMicroseconds(2);
+  digitalWrite(trigForward, HIGH);  delayMicroseconds(10);
   digitalWrite(trigForward, LOW);
   durationForward = pulseIn(echoForward, HIGH);
-  distanceForward = (durationForward/2)/29;
-
+  distanceForward = durationForward/58.2;
+  if(distanceForward > 3000.0)  distanceForward = lastDistanceForward;
 }
 
 void SerialMonitor(){
-  
-//  Serial.print(timeCount/1000);
   Serial.print(" Right = ");
   Serial.print(distanceRight);
   Serial.print(" cm  ;");
@@ -185,43 +277,43 @@ void SerialMonitor(){
 }
 
 void motorStop(){
-  digitalWrite(motorIn1, LOW);
-  digitalWrite(motorIn2, LOW);
-  digitalWrite(motorIn3, LOW);
-  digitalWrite(motorIn4, LOW);
+  analogWrite(motorIn1, 0);
+  analogWrite(motorIn2, 0);
+  analogWrite(motorIn3, 0);
+  analogWrite(motorIn4, 0);
 }
 
 void forward(){
-  digitalWrite(motorIn1, LOW);
-  digitalWrite(motorIn2, HIGH);
-  digitalWrite(motorIn3, HIGH);
-  digitalWrite(motorIn4, LOW);
+  analogWrite(motorIn1, 0);
+  analogWrite(motorIn2, 200);
+  analogWrite(motorIn3, 200);
+  analogWrite(motorIn4, 0);
 }
 
 void backward(){
-  digitalWrite(motorIn1, HIGH);
-  digitalWrite(motorIn2, LOW);
-  digitalWrite(motorIn3, LOW);
-  digitalWrite(motorIn4, HIGH);
-}
-
-void turnLeft(){
-  digitalWrite(motorIn1, LOW);
-  digitalWrite(motorIn2, HIGH);
-  digitalWrite(motorIn3, LOW);
-  digitalWrite(motorIn4, LOW);
+  analogWrite(motorIn1, 200);
+  analogWrite(motorIn2, 0);
+  analogWrite(motorIn3, 0);
+  analogWrite(motorIn4, 200);
 }
 
 void turnRight(){
-  digitalWrite(motorIn1, LOW);
-  digitalWrite(motorIn2, LOW);
-  digitalWrite(motorIn3, HIGH);
-  digitalWrite(motorIn4, LOW);
+  analogWrite(motorIn1, 0);
+  analogWrite(motorIn2, 255);
+  analogWrite(motorIn3, 0);
+  analogWrite(motorIn4, 0);
+}
+
+void turnLeft(){
+  analogWrite(motorIn1, 0);
+  analogWrite(motorIn2, 0);
+  analogWrite(motorIn3, 255);
+  analogWrite(motorIn4, 0);
 }
 
 void turnAround(){
-  digitalWrite(motorIn1, HIGH);
-  digitalWrite(motorIn2, LOW);
-  digitalWrite(motorIn3, HIGH);
-  digitalWrite(motorIn4, LOW);
+  analogWrite(motorIn1, 200);
+  analogWrite(motorIn2, 0);
+  analogWrite(motorIn3, 200);
+  analogWrite(motorIn4, 0);
 }

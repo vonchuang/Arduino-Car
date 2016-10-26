@@ -100,7 +100,7 @@ void loop() {
             getDistance();
             driveDirectionCheck();
             forward();           
-//            SerialMonitor();
+            SerialMonitor();
             timeCount = timeCount + timeInterval;
             delay(timeInterval/2);
           }
